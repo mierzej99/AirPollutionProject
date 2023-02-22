@@ -31,7 +31,10 @@ def find_common_years(list_of_yeras_from_different_sources: List[List[str]]) -> 
     """
     return set of common yers from list of lists of yeras
     """
-    common_years = set(list_of_yeras_from_different_sources[0])
+    if list_of_yeras_from_different_sources:
+        common_years = set(list_of_yeras_from_different_sources[0])
+    else:
+        return []
     for yeras in list_of_yeras_from_different_sources[1:]:
         common_years.intersection_update(set(yeras))
     return sorted(list(common_years))
