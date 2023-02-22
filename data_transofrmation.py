@@ -2,7 +2,7 @@ from typing import List
 import pandas as pd
 
 
-def data_cleaning(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
+def data_cleaning(datas: List[pd.DataFrame], years: List[str]) -> List[pd.DataFrame]:
     """
     droping nan's from dataframe
     """
@@ -18,9 +18,11 @@ def data_cleaning(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
         data.drop(['Country Code', 'Indicator Name', 'Indicator Code'], axis=1, inplace=True)
         data['Country'] = data['Country'].str.upper()
 
-    datas = leave_only_common_years(datas)
+    datas = leave_only_common_years(datas, years)
 
     datas[2] = datas[2].dropna()
+    if len(datas[0].columns) < 2:
+        raise Exception('There are no common years.')
 
     return datas
 
@@ -35,14 +37,18 @@ def find_common_years(list_of_yeras_from_different_sources: List[List[str]]) -> 
     return sorted(list(common_years))
 
 
-def leave_only_common_years(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
+def leave_only_common_years(datas: List[pd.DataFrame], years: List[str]) -> List[pd.DataFrame]:
     """
     return list of dataframes with common yeras for all of them
     """
     gdp_dataframe, population_dataframe, co2_dataframe = datas
 
-    common_years = find_common_years(
-        [gdp_dataframe.columns[1:], population_dataframe.columns[1:], co2_dataframe.columns[1:]])
+    if years is not None :
+        common_years = find_common_years(
+        [gdp_dataframe.columns[1:], population_dataframe.columns[1:], co2_dataframe.columns[1:], years])
+    else:
+        common_years = find_common_years(
+            [gdp_dataframe.columns[1:], population_dataframe.columns[1:], co2_dataframe.columns[1:]])
 
     gdp_dataframe = gdp_dataframe[list(gdp_dataframe.columns[:1]) + common_years]
 
