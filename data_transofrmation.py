@@ -21,7 +21,6 @@ def data_cleaning(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
     datas = leave_only_common_years(datas)
 
     datas[2] = datas[2].dropna()
-    print(datas[2])
 
     return datas
 
