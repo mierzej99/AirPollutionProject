@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Tuple, List
+from typing import List
 
 
 def raw_data_import(path_to_gdp: str, path_to_population: str, path_to_co2: str) -> List[pd.DataFrame]:
@@ -20,3 +20,4 @@ def raw_data_import(path_to_gdp: str, path_to_population: str, path_to_co2: str)
         data.drop(labels=name, axis=1, inplace=True)
 
     return [gdp_dataframe, population_dataframe, co2_dataframe]
+

@@ -1,14 +1,29 @@
-from typing import List, Set
+from typing import List
 import pandas as pd
 import data_loading
 
 
-def data_cleaning(data: pd.DataFrame):
+def data_cleaning(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
     """
     droping nan's from dataframe
     """
-    data.dropna(inplace=True)
-    data.reset_index(inplace=True, drop=True)
+    datas[2]['Year'] = datas[2]['Year'].astype(str)
+    for data in datas:
+        data.dropna(inplace=True)
+        data.reset_index(inplace=True, drop=True)
+    datas[2] = datas[2][['Year', 'Country', 'Per Capita']]
+    datas[2] = datas[2].pivot(index='Country', columns='Year', values='Per Capita').reset_index()
+
+    for data in datas[:2]:
+        data.rename(columns={'Country Name': 'Country'}, inplace=True)
+        data.drop(['Country Code', 'Indicator Name', 'Indicator Code'], axis=1, inplace=True)
+        data['Country'] = data['Country'].str.upper()
+
+    datas = leave_only_common_years(datas)
+
+    datas[2].dropna(inplace=True)
+
+    return datas
 
 
 def find_common_years(list_of_yeras_from_different_sources: List[List[str]]) -> List[str]:
@@ -21,31 +36,30 @@ def find_common_years(list_of_yeras_from_different_sources: List[List[str]]) -> 
     return sorted(list(common_years))
 
 
-def leave_only_common_years(gdp_dataframe: pd.DataFrame, population_dataframe: pd.DataFrame,
-                            co2_dataframe: pd.DataFrame):
+def leave_only_common_years(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    gdp_dataframe, population_dataframe, co2_dataframe = datas
+
     common_years = find_common_years(
-        [gdp_dataframe.columns[4:], population_dataframe.columns[4:], [str(x) for x in co2_dataframe['Year']]])
-    common_years = common_years
-    gdp_dataframe = gdp_dataframe.filter(items=list(gdp_dataframe.columns[:4]) + common_years, axis=1)
-    population_dataframe = population_dataframe.filter(items=list(gdp_dataframe.columns[:4]) + common_years, axis=1)
+        [gdp_dataframe.columns[1:], population_dataframe.columns[1:], co2_dataframe.columns[1:]])
 
-    common_years = [int(x) for x in common_years]
+    gdp_dataframe = gdp_dataframe[list(gdp_dataframe.columns[:1]) + common_years]
 
-    co2_dataframe = co2_dataframe.loc[co2_dataframe['Year'].isin(common_years)]
-    co2_dataframe = co2_dataframe.pivot(index='Country', columns='Year',
-                        values=['Total', 'Solid Fuel', 'Liquid Fuel', 'Gas Fuel', 'Cement', 'Gas Flaring',
-                                'Per Capita'])
+    population_dataframe = population_dataframe[list(population_dataframe.columns[:1]) + common_years]
+
+    co2_dataframe = co2_dataframe[list(co2_dataframe.columns[:1]) + common_years]
+
+    return [gdp_dataframe, population_dataframe, co2_dataframe]
 
 
+def data_merging(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    gdp_dataframe, population_dataframe, co2_dataframe = datas
+    common_years = gdp_dataframe.columns[1:]
 
+    gdp_for_analysis = gdp_dataframe.merge(population_dataframe, on='Country', suffixes=('_gdp', '_population'))
 
+    for year in common_years:
+        gdp_for_analysis[year] = gdp_for_analysis[year + '_gdp'].div(gdp_for_analysis[year + '_population'])
+        gdp_for_analysis.drop([year + '_gdp', year + '_population'], axis=1, inplace=True)
 
-pd.set_option('display.max_columns', None)  # ustawia wyświetlanie wszystkich kolumn
-pd.set_option('display.max_rows', None)
-datas = data_loading.raw_data_import(
-    'C:\\Users\\ChecDoNauki\\Documents\\uw_matma\\sem5\\npd\\projekt_zaliczeniowy\\API_NY.GDP.MKTP.CD_DS2_en_csv_v2_4751562\\API_NY.GDP.MKTP.CD_DS2_en_csv_v2_4751562.csv',
-    'C:\\Users\\ChecDoNauki\\Documents\\uw_matma\\sem5\\npd\\projekt_zaliczeniowy\\API_SP.POP.TOTL_DS2_en_csv_v2_4751604\\API_SP.POP.TOTL_DS2_en_csv_v2_4751604.csv',
-    'C:\\Users\\ChecDoNauki\\Documents\\uw_matma\\sem5\\npd\\projekt_zaliczeniowy\\co2-fossil-by-nation_zip\\data\\fossil-fuel-co2-emissions-by-nation_csv.csv')
-for data in datas:
-    data_cleaning(data)
-leave_only_common_years(datas[0], datas[1], datas[2])
+    return [gdp_for_analysis, co2_dataframe]
+
