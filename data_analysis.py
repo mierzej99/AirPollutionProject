@@ -1,23 +1,44 @@
 from typing import List
-
 import pandas as pd
-import data_loading, data_transofrmation
 
-def
 
 def most_co2_per_capita(datas: List[pd.DataFrame]) -> pd.DataFrame:
+    """
+    return dataframe of top 5 co2 producers per capita for every year
+    """
     _, co2_dataframe = datas
-    #merged_data = population_dataframe.merge(co2_dataframe, left_on='Country Name', right_on='Country')
-    #print(merged_data.iloc[:3,:])
+    top_5_by_year = dict()
+    for year in co2_dataframe.columns[1:]:
+        top_5_by_year[year] = co2_dataframe.nlargest(5, year).reset_index(drop=True)['Country']
+    return pd.DataFrame(top_5_by_year)
 
 
-pd.set_option('display.max_columns', None)  # ustawia wyświetlanie wszystkich kolumn
-pd.set_option('display.max_rows', None)
-datas = data_loading.raw_data_import(
-    'C:\\Users\\ChecDoNauki\\Documents\\uw_matma\\sem5\\npd\\projekt_zaliczeniowy\\API_NY.GDP.MKTP.CD_DS2_en_csv_v2_4751562\\API_NY.GDP.MKTP.CD_DS2_en_csv_v2_4751562.csv',
-    'C:\\Users\\ChecDoNauki\\Documents\\uw_matma\\sem5\\npd\\projekt_zaliczeniowy\\API_SP.POP.TOTL_DS2_en_csv_v2_4751604\\API_SP.POP.TOTL_DS2_en_csv_v2_4751604.csv',
-    'C:\\Users\\ChecDoNauki\\Documents\\uw_matma\\sem5\\npd\\projekt_zaliczeniowy\\co2-fossil-by-nation_zip\\data\\fossil-fuel-co2-emissions-by-nation_csv.csv')
+def most_gdp_per_capita(datas: List[pd.DataFrame]) -> pd.DataFrame:
+    """
+    return dataframe of top 5 gdp per capita for every year
+    """
+    gdp_dataframe, _ = datas
+    top_5_by_year = dict()
+    for year in gdp_dataframe.columns[1:]:
+        top_5_by_year[year] = gdp_dataframe.nlargest(5, year).reset_index(drop=True)['Country']
+    return pd.DataFrame(top_5_by_year)
 
-datas = data_transofrmation.data_cleaning(datas)
-datas_for_analysis = data_transofrmation.data_merging(datas)
 
+def most_co2_increase(datas: List[pd.DataFrame]) -> pd.DataFrame:
+    """
+    return dataframe of top 5 increase of co2 per capita between 2004 and 2014
+    """
+    _, co2_dataframe = datas
+
+    co2_dataframe['Increase'] = co2_dataframe['2014'].subtract(co2_dataframe['2004'])
+    return co2_dataframe.nlargest(5, 'Increase').reset_index(drop=True)[['Country']]
+
+
+def most_co2_decrease(datas: List[pd.DataFrame]) -> pd.DataFrame:
+    """
+    return dataframe of top 5 decrease of co2 per capita between 2004 and 2014
+    """
+    _, co2_dataframe = datas
+
+    co2_dataframe['Increase'] = co2_dataframe['2014'].subtract(co2_dataframe['2004'])
+    return co2_dataframe.nsmallest(5, 'Increase').reset_index(drop=True)[['Country']]

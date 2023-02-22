@@ -1,6 +1,5 @@
 from typing import List
 import pandas as pd
-import data_loading
 
 
 def data_cleaning(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
@@ -21,7 +20,8 @@ def data_cleaning(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
 
     datas = leave_only_common_years(datas)
 
-    datas[2].dropna(inplace=True)
+    datas[2] = datas[2].dropna()
+    print(datas[2])
 
     return datas
 
@@ -37,6 +37,9 @@ def find_common_years(list_of_yeras_from_different_sources: List[List[str]]) -> 
 
 
 def leave_only_common_years(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    """
+    return list of dataframes with common yeras for all of them
+    """
     gdp_dataframe, population_dataframe, co2_dataframe = datas
 
     common_years = find_common_years(
@@ -52,6 +55,9 @@ def leave_only_common_years(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
 
 
 def data_merging(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    """
+    return dataframes in form for analysis
+    """
     gdp_dataframe, population_dataframe, co2_dataframe = datas
     common_years = gdp_dataframe.columns[1:]
 
@@ -62,4 +68,3 @@ def data_merging(datas: List[pd.DataFrame]) -> List[pd.DataFrame]:
         gdp_for_analysis.drop([year + '_gdp', year + '_population'], axis=1, inplace=True)
 
     return [gdp_for_analysis, co2_dataframe]
-
